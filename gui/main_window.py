@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 
 from gui.sender_window import SenderWindow
 from gui.receiver_window import ReceiverWindow
+from gui.simulation_window import SimulationWindow
 
 
 class MainWindow:
@@ -56,6 +57,13 @@ class MainWindow:
         )
         start_button.pack(pady=20)
 
+        simulation_button = ttk.Button(
+            self.root,
+            text="Simulation Mode",
+            command=self.open_simulation
+        )
+        simulation_button.pack(pady=5)
+
     def start_mode(self):
 
         selected = self.mode.get()
@@ -72,6 +80,10 @@ class MainWindow:
 
         elif selected == "receiver":
             ReceiverWindow()
+
+    def open_simulation(self):
+
+        SimulationWindow(self.root)
 
     def run(self):
 
