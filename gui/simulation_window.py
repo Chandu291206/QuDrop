@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-from bb84.bb84_core import run_bb84_simulation
+from bb84.bb84_core import QBER_THRESHOLD, QISKIT_AVAILABLE, run_bb84_simulation
 
 
 class SimulationWindow:
@@ -21,6 +21,9 @@ class SimulationWindow:
         self.bits_var = tk.StringVar(value="20")
         self.eve_var = tk.BooleanVar(value=False)
         self.status_var = tk.StringVar(value="Ready.")
+
+        backend = "Qiskit" if QISKIT_AVAILABLE else "Classical fallback"
+        print(f"[QuDrop] Backend: {backend}")
 
         self.create_widgets()
 
@@ -258,7 +261,7 @@ class SimulationWindow:
             return
 
         qber = self.simulation_data["qber"]
-        if qber > 0.1:
+        if qber > QBER_THRESHOLD:
             self.status_var.set("Eavesdropping Detected!")
             self.status_label.config(foreground="#b91c1c")
         else:

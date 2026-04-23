@@ -1,7 +1,35 @@
 import socket
 import json
+import struct
 
 PORT = 5000
+FRAME_HEADER_SIZE = 4
+
+
+def _recv_exact(sock, size):
+
+    chunks = bytearray()
+
+    while len(chunks) < size:
+        packet = sock.recv(size - len(chunks))
+        if not packet:
+            raise ConnectionError("Socket connection closed unexpectedly.")
+        chunks.extend(packet)
+
+    return bytes(chunks)
+
+
+def _send_frame(sock, payload):
+
+    header = struct.pack("!I", len(payload))
+    sock.sendall(header + payload)
+
+
+def _receive_frame(sock):
+
+    header = _recv_exact(sock, FRAME_HEADER_SIZE)
+    payload_size = struct.unpack("!I", header)[0]
+    return _recv_exact(sock, payload_size) if payload_size > 0 else b""
 
 
 # Receiver Side
@@ -35,56 +63,47 @@ def connect_to_server(ip):
 
 def send_message(sock, message):
 
-    sock.sendall(message.encode())
+    _send_frame(sock, message.encode("utf-8"))
 
 
 def receive_message(sock):
 
-    data = sock.recv(1024)
+    data = _receive_frame(sock)
 
-    return data.decode()
+    return data.decode("utf-8")
 
 def send_list(sock, data):
 
-    message = json.dumps(data)
+    message = json.dumps(data).encode("utf-8")
 
-    sock.sendall(message.encode())
+    _send_frame(sock, message)
 
 
 def receive_list(sock):
 
-    data = sock.recv(8192)
+    data = _receive_frame(sock)
 
-    return json.loads(data.decode())
+    return json.loads(data.decode("utf-8"))
+
+
+def send_qber_sample(sock, sample_indices, alice_sample_bits):
+
+    send_list(sock, {
+        "sample_indices": sample_indices,
+        "alice_sample_bits": alice_sample_bits
+    })
+
+
+def receive_qber_sample(sock):
+
+    payload = receive_list(sock)
+    return payload["sample_indices"], payload["alice_sample_bits"]
 
 def send_file(sock, data):
 
-    size = len(data)
-
-    sock.sendall(str(size).encode())
-
-    sock.recv(1024)
-
-    sock.sendall(data)
+    _send_frame(sock, data)
 
 
 def receive_file(sock):
 
-    size = int(sock.recv(1024).decode())
-
-    sock.sendall(b"OK")
-
-    data = bytearray()
-
-    while len(data) < size:
-
-        remaining = size - len(data)
-
-        packet = sock.recv(min(4096, remaining))
-
-        if not packet:
-            break
-
-        data.extend(packet)
-
-    return bytes(data)
+    return _receive_frame(sock)
