@@ -1,0 +1,66 @@
+============================================================
+QU DROP - ERROR RATE ANALYSIS REPORT
+============================================================
+
+EXECUTIVE SUMMARY
+--------------------
+This report analyzes the performance of the Quantum Key Distribution (QKD) process under simulated channel noise. Specifically, a constant bit-flip noise of 5% (p=0.05) was injected into the quantum channel to measure its impact on the Quantum Bit Error Rate (QBER) and subsequent file encryption integrity.
+
+PART 1: KEY-LENGTH STUDY
+--------------------
+Raw Length: 8 bits
+  - Sifted Keys Average: 3.98 bits
+  - QBER: 5.06% (Std: 12.08%)
+  - Encryption BER: 0.0000%
+
+Raw Length: 16 bits
+  - Sifted Keys Average: 7.90 bits
+  - QBER: 5.90% (Std: 8.95%)
+  - Encryption BER: 0.0000%
+
+Raw Length: 32 bits
+  - Sifted Keys Average: 16.02 bits
+  - QBER: 5.66% (Std: 5.58%)
+  - Encryption BER: 0.0000%
+
+Raw Length: 48 bits
+  - Sifted Keys Average: 23.81 bits
+  - QBER: 4.68% (Std: 4.41%)
+  - Encryption BER: 0.0000%
+
+Raw Length: 64 bits
+  - Sifted Keys Average: 31.57 bits
+  - QBER: 5.48% (Std: 3.93%)
+  - Encryption BER: 0.0000%
+
+PART 2: DATA-TYPE STUDY
+--------------------
+File: test.txt (19 bytes)
+  - Avg Bit Error Rate:  0.000000%
+  - Avg Byte Error Rate: 0.000000%
+  - Avg Process Time:    0.01 ms
+
+File: test_bin.dat (2048 bytes)
+  - Avg Bit Error Rate:  0.000000%
+  - Avg Byte Error Rate: 0.000000%
+  - Avg Process Time:    0.41 ms
+
+File: test_data.csv (789 bytes)
+  - Avg Bit Error Rate:  0.000000%
+  - Avg Byte Error Rate: 0.000000%
+  - Avg Process Time:    0.17 ms
+
+File: test_data.json (400 bytes)
+  - Avg Bit Error Rate:  0.000000%
+  - Avg Byte Error Rate: 0.000000%
+  - Avg Process Time:    0.16 ms
+
+File: test_text.txt (1450 bytes)
+  - Avg Bit Error Rate:  0.000000%
+  - Avg Byte Error Rate: 0.000000%
+  - Avg Process Time:    0.58 ms
+
+CONCLUSIONS
+--------------------
+1. QBER closely tracks the injected channel noise (5%).
+2. Due to the deterministic nature of XOR encryption, provided the QKD protocol successfully establishes an identical shared key post-privacy amplification, the resulting file transfer Bit Error Rate (BER) over the classical channel will be 0.00%.

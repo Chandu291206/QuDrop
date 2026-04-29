@@ -211,3 +211,4 @@ def privacy_amplify(key_bits, target_length=None):
         counter += 1
 
     return bytes(output[:target_length])
+

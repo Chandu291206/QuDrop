@@ -1,6 +1,8 @@
-# This project runs on Python 3.10+ without mandatory third-party packages.
-# Qiskit is optional and only used when available.
-#
+fastapi
+python-socketio[asyncio]
+uvicorn[standard]
+
+# This project runs on Python 3.10+
 # Optional quantum backend (Python 3.10+):
 # qiskit
 # qiskit-aer
