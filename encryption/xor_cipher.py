@@ -12,7 +12,7 @@ def xor_encrypt(data, key):
 
         encrypted.append(encrypted_byte)
 
-    return encrypted
+    return bytes(encrypted)
 
 
 def xor_decrypt(data, key):

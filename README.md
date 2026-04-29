@@ -85,8 +85,21 @@ python main.py
 - Enter Receiver IP (use `127.0.0.1` if both are on the same machine)
 - Click `Connect`
 - Click `Generate BB84 Key`
-- Click `Select File` and choose a file
+- Click `Select File` and choose any file (text, image, audio, video, etc.)
 - Click `Send File`
+
+The Sender and Receiver windows show live runtime metrics:
+- QBER (estimated from exchanged sample bits)
+- Secure key rate (bit/s)
+- File send/receive rate (KiB/s)
+- Detected data category (`text`, `image`, `audio`, `video`, or `unknown`)
+- Transfer error rates: BER (%) and byte-error rate (%) after decrypt
+
+To see non-zero QBER in localhost testing, use Sender controls:
+- Increase `Raw BB84 bits` (for example `256` or `512`) for a more stable estimate
+- Enable `Channel Noise` and set a probability (for example `0.02` to `0.10`)
+- Or enable `Test Eve` to simulate eavesdropping disturbance (typically around 25% QBER)
+- Keep `Enable Exact Transfer Error Test` checked to compute BER/byte error exactly
 
 Received files are saved in:
 
@@ -123,3 +136,4 @@ This generates:
 - Default TCP port is `5000` (configured in `network/connection.py`).
 - If sender cannot connect, make sure firewall rules allow the port.
 - If Qiskit fails to import (DLL/runtime issues), the project automatically falls back to a pure-Python BB84 measurement model.
+- For localhost testing, run Receiver and Sender in two separate terminals and use `127.0.0.1`.
