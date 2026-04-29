@@ -1,33 +1,39 @@
-# Qudrop - BB84 Secure File Transfer
+# Qudrop - Quantum Secure File Transfer
 
-Qudrop is a Python project that demonstrates BB84 quantum key distribution (QKD) for secure file transfer.
+## Abstract
+Qudrop is an advanced, end-to-end Python application designed to demonstrate and simulate Quantum Key Distribution (QKD) for secure peer-to-peer file transfer. By implementing and evaluating multiple prominent QKD protocols—including **BB84, B92, E91, and Six-State**—the project provides a comprehensive sandbox for understanding quantum cryptography. The system derives highly secure, privacy-amplified shared keys from simulated quantum channels, which are then used to symmetrically encrypt various data types via a fast XOR cipher before transmission over classical TCP sockets. 
 
-It includes:
-- A GUI app to run as Sender (Alice) or Receiver (Bob)
-- A local simulation script that encrypts/decrypts a file using a BB84-derived key
+Beyond core file transfer, Qudrop features a robust error-rate analysis module to study the impact of quantum channel noise (bit-flip disturbances) on the Quantum Bit Error Rate (QBER) and the resulting classical file Bit Error Rate (BER). The application provides both a modernized React-based web interface driven by a FastAPI backend, as well as a legacy desktop GUI for direct local testing.
+
+## Features
+- **Multi-Protocol QKD Engine**: Full simulation of BB84, B92, E91, and Six-State protocols, including key generation, quantum measurement, and key sifting.
+- **Modern Web Application**: A sleek, responsive React (Vite) frontend communicating with a high-performance Python FastAPI backend.
+- **Comprehensive Error Analysis**: Automated scripts to analyze the effects of channel noise across different protocols, key lengths, and data types (text, binary, CSV, JSON).
+- **P2P Secure Transfer**: Live, local TCP socket communication mirroring real-world Alice/Bob transfer dynamics.
+- **File Agnostic Encryption**: Quantum keys are deterministically expanded via SHA-256 for XOR-based encryption of any file format.
 
 ## Project Structure
 
-- `main.py`: Starts the GUI app
-- `gui/`: Sender/Receiver windows and main mode selector
-- `bb84/bb84_core.py`: BB84 key generation, measurement, and key sifting logic
-- `network/connection.py`: TCP socket communication utilities
-- `encryption/xor_cipher.py`: XOR-based file encryption/decryption
-- `simulation_qkd.py`: End-to-end local BB84 file transfer simulation
+- `frontend/`: Modern React/Vite-based user interface.
+- `server/`: FastAPI backend to bridge the web interface with core Python QKD logic.
+- `gui/`: Legacy Tkinter desktop GUI (Sender/Receiver).
+- `protocols/` & `bb84/`: Implementations of the supported QKD protocols.
+- `analysis/`: Error-rate studies, automated testing scripts, and generated markdown/text reports.
+- `network/`: TCP socket communication utilities for P2P networking.
+- `encryption/`: Cryptographic utilities including XOR file encryption/decryption.
+- `main.py` / `main_gui.py`: Entry points for the legacy GUI application.
+- `simulation_qkd.py` / `test_error_rates.py`: Local testing and simulation scripts.
 
 ## Requirements
 
-- Python 3.10+ (Python 3.9 is not required)
-- Tkinter (usually included with standard Python on Windows)
-
-This project runs without mandatory third-party packages.
+- **Python 3.10+**
+- **Node.js 18+** (Required for running the modern React frontend)
 
 ## Setup (Recommended: Virtual Environment)
 
-Create and activate a virtual environment before running the project.
+Create and activate a Python virtual environment:
 
 ### Windows (PowerShell)
-
 ```bash
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
@@ -35,105 +41,73 @@ python -m pip install --upgrade pip
 ```
 
 ### macOS/Linux
-
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-Install optional dependencies from `requirements.txt`:
-
+Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-Optional: if you want to use the Qiskit-backed measurement path instead of the built-in fallback simulator:
-
+Optional: If you want to use the Qiskit-backed measurement path instead of the built-in fallback simulator:
 ```bash
 pip install qiskit qiskit-aer
 ```
 
-Deactivate the environment when done:
+## How to Run
 
+### 1. Modern Web Application (Recommended)
+You can run the modernized FastAPI and React stack.
+
+**Start the FastAPI Backend:**
+Open a terminal and start the server:
 ```bash
-deactivate
+cd server
+uvicorn main:app --reload --port 8000
 ```
 
-## How to Run (GUI Mode)
-
-### 1. Start Receiver (Bob)
-
+**Start the React Frontend:**
+Open a second terminal, navigate to the frontend directory, install dependencies, and start the Vite development server:
 ```bash
-python main.py
+cd frontend
+npm install
+npm run dev
 ```
 
-- Select `Receiver (Bob)`
-- Click `Start`
-- In the receiver window, click `Start Receiver`
+### 2. Legacy GUI Application
+If you prefer the original Tkinter interface, you can run Alice (Sender) and Bob (Receiver) locally.
 
-### 2. Start Sender (Alice)
+**Start Receiver (Bob)**
+1. Run `python main.py`
+2. Select **Receiver (Bob)** and click Start.
+3. Click **Start Receiver**.
 
-Open a second terminal (or second machine) and run:
+**Start Sender (Alice)**
+1. Open a second terminal and run `python main.py`
+2. Select **Sender (Alice)** and click Start.
+3. Enter Receiver IP (use `127.0.0.1` for localhost).
+4. Click **Connect**, then **Generate Key** (Select your preferred protocol).
+5. Select a file and click **Send File**.
 
+Received files are saved in the `received_files/` directory.
+
+## Analysis & Simulation
+
+To run the error rate analysis study (evaluating QBER and classical file BER under noise):
 ```bash
-python main.py
+python analysis/error_rate_study.py
 ```
+This will run trials across all supported protocols and generate reports (`error_rate_report.txt` and `error_rate_table.md`) in the `analysis` folder.
 
-- Select `Sender (Alice)`
-- Click `Start`
-- Enter Receiver IP (use `127.0.0.1` if both are on the same machine)
-- Click `Connect`
-- Click `Generate BB84 Key`
-- Click `Select File` and choose any file (text, image, audio, video, etc.)
-- Click `Send File`
-
-The Sender and Receiver windows show live runtime metrics:
-- QBER (estimated from exchanged sample bits)
-- Secure key rate (bit/s)
-- File send/receive rate (KiB/s)
-- Detected data category (`text`, `image`, `audio`, `video`, or `unknown`)
-- Transfer error rates: BER (%) and byte-error rate (%) after decrypt
-
-To see non-zero QBER in localhost testing, use Sender controls:
-- Increase `Raw BB84 bits` (for example `256` or `512`) for a more stable estimate
-- Enable `Channel Noise` and set a probability (for example `0.02` to `0.10`)
-- Or enable `Test Eve` to simulate eavesdropping disturbance (typically around 25% QBER)
-- Keep `Enable Exact Transfer Error Test` checked to compute BER/byte error exactly
-
-Received files are saved in:
-
-```text
-received_files/
-```
-
-## How to Run Simulation
-
-### GUI Simulation Mode
-
-```bash
-python main.py
-```
-
-- Click `Simulation Mode`
-- Set Number of Bits and optionally enable Eve (eavesdropping)
-- Click `Generate` for full results or `Step-by-Step` for animated stages
-
-### Local Script Simulation
-
-To run the script-based simulation with default input file (`test.txt`):
-
+To run a basic script-based file transfer simulation:
 ```bash
 python simulation_qkd.py
 ```
 
-This generates:
-- `ciphertext.bin`
-- `decrypted.txt`
-
 ## Notes
-
-- Default TCP port is `5000` (configured in `network/connection.py`).
-- If sender cannot connect, make sure firewall rules allow the port.
-- If Qiskit fails to import (DLL/runtime issues), the project automatically falls back to a pure-Python BB84 measurement model.
-- For localhost testing, run Receiver and Sender in two separate terminals and use `127.0.0.1`.
+- The default TCP port for the legacy app is `5000` (configured in `network/connection.py`).
+- If Qiskit fails to import, the project automatically falls back to a pure-Python measurement model.
+- Because the simulation doesn't currently execute the Information Reconciliation (Error Correction) phase, injecting noise will result in mismatched post-amplification keys and high final Bit Error Rates. This is expected and highlighted in the analysis reports.
