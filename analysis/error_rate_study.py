@@ -61,7 +61,7 @@ def run_qkd_simulation(protocol, raw_bits, noise_prob):
     bob_sifted = ProtocolRunner.sift_key_bob(protocol, bob_results, alice_bases, bob_bases, extra_data)
     
     if len(alice_sifted) == 0:
-        return 0.0, 0, b""
+        return 0.0, 0, b"", b""
         
     # QBER estimation
     # Normally we sample, but for analysis we can just measure exactly on the sifted keys
@@ -69,47 +69,51 @@ def run_qkd_simulation(protocol, raw_bits, noise_prob):
     qber = errors / len(alice_sifted) if len(alice_sifted) > 0 else 0.0
     
     # Privacy amplification
-    final_key = privacy_amplify(bob_sifted)
+    alice_key = privacy_amplify(alice_sifted)
+    bob_key = privacy_amplify(bob_sifted)
     
-    return qber, len(alice_sifted), final_key
+    return qber, len(alice_sifted), alice_key, bob_key
 
 def run_key_length_study():
     lengths = [8, 16, 32, 48, 64]
     noise = 0.05
     trials = 100
-    protocol = "BB84"
+    protocols = ["BB84", "B92", "E91", "Six-State"]
     
     results = []
     
-    for length in lengths:
-        qbers = []
-        sifted_lengths = []
-        bers = []
-        
-        for _ in range(trials):
-            qber, sifted_len, key = run_qkd_simulation(protocol, length, noise)
-            qbers.append(qber)
-            sifted_lengths.append(sifted_len)
+    for protocol in protocols:
+        for length in lengths:
+            qbers = []
+            sifted_lengths = []
+            bers = []
             
-            # Simulated encryption BER
-            if len(key) == 0:
-                # Fallback to avoid empty key failure in our analysis
-                key = b"\x00"
+            for _ in range(trials):
+                qber, sifted_len, alice_key, bob_key = run_qkd_simulation(protocol, length, noise)
+                qbers.append(qber)
+                sifted_lengths.append(sifted_len)
                 
-            test_data = b"Testing Error Rates for Quantum Key Distribution"
-            encrypted = xor_encrypt(test_data, key)
-            decrypted = xor_decrypt(encrypted, key)
-            
-            bit_errors, total_bits, _, _ = compute_transfer_errors(test_data, decrypted)
-            bers.append(bit_errors / total_bits if total_bits else 0)
-            
-        results.append({
-            "raw_length": length,
-            "qber_mean": statistics.mean(qbers),
-            "qber_std": statistics.stdev(qbers) if len(qbers) > 1 else 0,
-            "sifted_mean": statistics.mean(sifted_lengths),
-            "ber_mean": statistics.mean(bers)
-        })
+                # Simulated encryption BER
+                if len(alice_key) == 0 or len(bob_key) == 0:
+                    # Fallback to avoid empty key failure in our analysis
+                    alice_key = b"\x00"
+                    bob_key = b"\x00"
+                    
+                test_data = b"Testing Error Rates for Quantum Key Distribution"
+                encrypted = xor_encrypt(test_data, alice_key)
+                decrypted = xor_decrypt(encrypted, bob_key)
+                
+                bit_errors, total_bits, _, _ = compute_transfer_errors(test_data, decrypted)
+                bers.append(bit_errors / total_bits if total_bits else 0)
+                
+            results.append({
+                "protocol": protocol,
+                "raw_length": length,
+                "qber_mean": statistics.mean(qbers),
+                "qber_std": statistics.stdev(qbers) if len(qbers) > 1 else 0,
+                "sifted_mean": statistics.mean(sifted_lengths),
+                "ber_mean": statistics.mean(bers)
+            })
     return results
 
 def run_data_type_study():
@@ -120,50 +124,53 @@ def run_data_type_study():
     files = [f for f in os.listdir(public_dir) if os.path.isfile(os.path.join(public_dir, f))]
     noise = 0.05
     trials = 50
-    protocol = "BB84"
+    protocols = ["BB84", "B92", "E91", "Six-State"]
     raw_bits = 64
     
     results = []
     
-    for f in files:
-        filepath = os.path.join(public_dir, f)
-        try:
-            with open(filepath, "rb") as file_obj:
-                data = file_obj.read()
-        except:
-            continue
-            
-        file_size = len(data)
-        if file_size == 0:
-            continue
-            
-        bers = []
-        byte_ers = []
-        enc_times = []
-        
-        for _ in range(trials):
-            _, _, key = run_qkd_simulation(protocol, raw_bits, noise)
-            if len(key) == 0:
-                key = b"\x00"
+    for protocol in protocols:
+        for f in files:
+            filepath = os.path.join(public_dir, f)
+            try:
+                with open(filepath, "rb") as file_obj:
+                    data = file_obj.read()
+            except:
+                continue
                 
-            start = time.perf_counter()
-            encrypted = xor_encrypt(data, key)
-            decrypted = xor_decrypt(encrypted, key)
-            enc_time = time.perf_counter() - start
+            file_size = len(data)
+            if file_size == 0:
+                continue
+                
+            bers = []
+            byte_ers = []
+            enc_times = []
             
-            bit_errors, total_bits, byte_errors, total_bytes = compute_transfer_errors(data, decrypted)
-            
-            bers.append(bit_errors / total_bits if total_bits else 0)
-            byte_ers.append(byte_errors / total_bytes if total_bytes else 0)
-            enc_times.append(enc_time)
-            
-        results.append({
-            "filename": f,
-            "size": file_size,
-            "ber_mean": statistics.mean(bers),
-            "byte_er_mean": statistics.mean(byte_ers),
-            "enc_time_mean": statistics.mean(enc_times)
-        })
+            for _ in range(trials):
+                _, _, alice_key, bob_key = run_qkd_simulation(protocol, raw_bits, noise)
+                if len(alice_key) == 0 or len(bob_key) == 0:
+                    alice_key = b"\x00"
+                    bob_key = b"\x00"
+                    
+                start = time.perf_counter()
+                encrypted = xor_encrypt(data, alice_key)
+                decrypted = xor_decrypt(encrypted, bob_key)
+                enc_time = time.perf_counter() - start
+                
+                bit_errors, total_bits, byte_errors, total_bytes = compute_transfer_errors(data, decrypted)
+                
+                bers.append(bit_errors / total_bits if total_bits else 0)
+                byte_ers.append(byte_errors / total_bytes if total_bytes else 0)
+                enc_times.append(enc_time)
+                
+            results.append({
+                "protocol": protocol,
+                "filename": f,
+                "size": file_size,
+                "ber_mean": statistics.mean(bers),
+                "byte_er_mean": statistics.mean(byte_ers),
+                "enc_time_mean": statistics.mean(enc_times)
+            })
     return results
 
 def write_reports(key_study, data_study):
@@ -174,17 +181,17 @@ def write_reports(key_study, data_study):
     md_path = os.path.join(analysis_dir, "error_rate_table.md")
     with open(md_path, "w") as f:
         f.write("# QKD Error Rate Analysis\n\n")
-        f.write("## 1. Key-Length Study (Protocol: BB84, Noise: 5%, Trials: 100)\n\n")
-        f.write("| Raw Bits | Sifted Bits (Mean) | QBER (Mean) | QBER (Std) | Encryption BER |\n")
-        f.write("|---|---|---|---|---|\n")
+        f.write("## 1. Key-Length Study (Noise: 5%, Trials: 100)\n\n")
+        f.write("| Protocol | Raw Bits | Sifted Bits (Mean) | QBER (Mean) | QBER (Std) | Encryption BER |\n")
+        f.write("|---|---|---|---|---|---|\n")
         for res in key_study:
-            f.write(f"| {res['raw_length']} | {res['sifted_mean']:.2f} | {res['qber_mean']*100:.2f}% | {res['qber_std']*100:.2f}% | {res['ber_mean']*100:.4f}% |\n")
+            f.write(f"| {res['protocol']} | {res['raw_length']} | {res['sifted_mean']:.2f} | {res['qber_mean']*100:.2f}% | {res['qber_std']*100:.2f}% | {res['ber_mean']*100:.4f}% |\n")
             
-        f.write("\n## 2. Data-Type Study (Protocol: BB84, Raw Bits: 64, Noise: 5%, Trials: 50)\n\n")
-        f.write("| Filename | File Size (Bytes) | Bit Error Rate | Byte Error Rate | Avg Enc/Dec Time (s) |\n")
-        f.write("|---|---|---|---|---|\n")
+        f.write("\n## 2. Data-Type Study (Raw Bits: 64, Noise: 5%, Trials: 50)\n\n")
+        f.write("| Protocol | Filename | File Size (Bytes) | Bit Error Rate | Byte Error Rate | Avg Enc/Dec Time (ms) |\n")
+        f.write("|---|---|---|---|---|---|\n")
         for res in data_study:
-            f.write(f"| {res['filename']} | {res['size']} | {res['ber_mean']*100:.6f}% | {res['byte_er_mean']*100:.6f}% | {res['enc_time_mean']:.5f} |\n")
+            f.write(f"| {res['protocol']} | {res['filename']} | {res['size']} | {res['ber_mean']*100:.6f}% | {res['byte_er_mean']*100:.6f}% | {res['enc_time_mean']*1000:.5f} |\n")
 
     # 2. Write Text Report
     txt_path = os.path.join(analysis_dir, "error_rate_report.txt")
@@ -196,13 +203,20 @@ def write_reports(key_study, data_study):
         f.write("EXECUTIVE SUMMARY\n")
         f.write("-" * 20 + "\n")
         f.write("This report analyzes the performance of the Quantum Key Distribution (QKD) ")
-        f.write("process under simulated channel noise. Specifically, a constant bit-flip noise ")
-        f.write("of 5% (p=0.05) was injected into the quantum channel to measure its impact on ")
-        f.write("the Quantum Bit Error Rate (QBER) and subsequent file encryption integrity.\n\n")
+        f.write("process across different protocols (BB84, B92, E91, Six-State) under simulated channel noise. ")
+        f.write("Specifically, a constant bit-flip noise of 5% (p=0.05) was injected into the quantum channel ")
+        f.write("to measure its impact on the Quantum Bit Error Rate (QBER) and subsequent file encryption integrity.\n\n")
+        f.write("Notice that without Information Reconciliation (Error Correction) implemented, any QBER > 0 ")
+        f.write("causes Alice and Bob to have differing keys post-Privacy Amplification, leading to high (~50%) ")
+        f.write("Bit Error Rates during the classical file transfer phase due to the avalanche effect of the hashing.\n\n")
         
         f.write("PART 1: KEY-LENGTH STUDY\n")
         f.write("-" * 20 + "\n")
+        current_protocol = None
         for res in key_study:
+            if res['protocol'] != current_protocol:
+                current_protocol = res['protocol']
+                f.write(f"\n--- Protocol: {current_protocol} ---\n")
             f.write(f"Raw Length: {res['raw_length']} bits\n")
             f.write(f"  - Sifted Keys Average: {res['sifted_mean']:.2f} bits\n")
             f.write(f"  - QBER: {res['qber_mean']*100:.2f}% (Std: {res['qber_std']*100:.2f}%)\n")
@@ -210,7 +224,11 @@ def write_reports(key_study, data_study):
             
         f.write("PART 2: DATA-TYPE STUDY\n")
         f.write("-" * 20 + "\n")
+        current_protocol = None
         for res in data_study:
+            if res['protocol'] != current_protocol:
+                current_protocol = res['protocol']
+                f.write(f"\n--- Protocol: {current_protocol} ---\n")
             f.write(f"File: {res['filename']} ({res['size']} bytes)\n")
             f.write(f"  - Avg Bit Error Rate:  {res['ber_mean']*100:.6f}%\n")
             f.write(f"  - Avg Byte Error Rate: {res['byte_er_mean']*100:.6f}%\n")
@@ -218,11 +236,12 @@ def write_reports(key_study, data_study):
             
         f.write("CONCLUSIONS\n")
         f.write("-" * 20 + "\n")
-        f.write("1. QBER closely tracks the injected channel noise (5%).\n")
-        f.write("2. Due to the deterministic nature of XOR encryption, provided the QKD protocol ")
-        f.write("successfully establishes an identical shared key post-privacy amplification, ")
-        f.write("the resulting file transfer Bit Error Rate (BER) over the classical channel ")
-        f.write("will be 0.00%.\n")
+        f.write("1. QBER closely tracks the injected channel noise (5%) for all protocols.\n")
+        f.write("2. Due to the lack of Information Reconciliation in the simulation, even a 5% channel noise ")
+        f.write("results in mismatched sifted keys. Privacy amplification (SHA-256) magnifies these errors, ")
+        f.write("causing the final transferred files to have a ~50% Bit Error Rate and ~100% Byte Error Rate.\n")
+        f.write("3. This proves the absolute necessity of implementing the Error Reconciliation phase ")
+        f.write("(e.g., Cascade or LDPC) in a complete QKD pipeline to achieve a 0.00% BER in file transfer.\n")
 
 if __name__ == "__main__":
     print("Starting Key-Length Study...")
