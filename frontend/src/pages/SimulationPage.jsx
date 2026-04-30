@@ -56,9 +56,9 @@ export default function SimulationPage() {
     
     const messages = {
       0: "Ready.",
-      1: "Step 1/5: Alice generated random bits and bases.",
-      2: "Step 2/5: Bob's random bases are revealed.",
-      3: "Step 3/5: Bob's measured bits are revealed.",
+      1: "Step 1/5: Sender generated random bits and bases.",
+      2: "Step 2/5: Receiver's random bases are revealed.",
+      3: "Step 3/5: Receiver's measured bits are revealed.",
       4: "Step 4/5: Basis comparison shows matches and mismatches.",
       5: "Step 5/5: Final sifted key and QBER are shown."
     };
@@ -94,7 +94,7 @@ export default function SimulationPage() {
           <div style={{ paddingBottom: '0.75rem' }}>
             <label className="checkbox-wrapper">
               <input type="checkbox" checked={eveEnabled} onChange={e => setEveEnabled(e.target.checked)} />
-              Enable Eve (Eavesdropper)
+              Enable Eavesdropper
             </label>
           </div>
           
@@ -117,11 +117,11 @@ export default function SimulationPage() {
           </h3>
           
           <div style={{ fontFamily: 'monospace', fontSize: '1.2rem', lineHeight: '2' }}>
-            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Alice Bits:</span> {stepIndex >= 1 ? simData.data.alice_bits.join(' ') : ''}</div>
-            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Alice Bases:</span> {stepIndex >= 1 ? simData.data.alice_bases.join(' ') : ''}</div>
+            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Sender Bits:</span> {stepIndex >= 1 ? simData.data.alice_bits.join(' ') : ''}</div>
+            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Sender Bases:</span> {stepIndex >= 1 ? simData.data.alice_bases.join(' ') : ''}</div>
             <br />
-            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Bob Bases:</span> {stepIndex >= 2 ? simData.data.bob_bases.join(' ') : '? '.repeat(nBits)}</div>
-            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Bob Results:</span> {stepIndex >= 3 ? simData.data.bob_results.join(' ') : '? '.repeat(nBits)}</div>
+            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Receiver Bases:</span> {stepIndex >= 2 ? simData.data.bob_bases.join(' ') : '? '.repeat(nBits)}</div>
+            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Receiver Results:</span> {stepIndex >= 3 ? simData.data.bob_results.join(' ') : '? '.repeat(nBits)}</div>
             <br />
             <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Matches:</span> 
               {stepIndex >= 4 ? simData.data.matches.map((m, i) => (

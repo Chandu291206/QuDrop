@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import SenderPage from './pages/SenderPage';
 import ReceiverPage from './pages/ReceiverPage';
 import SimulationPage from './pages/SimulationPage';
+import ThemeToggle from './components/ThemeToggle';
 import { ArrowLeft } from 'lucide-react';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <ThemeToggle />
       {currentPage !== 'home' && (
         <div style={{ padding: '1rem 2rem' }}>
           <button 

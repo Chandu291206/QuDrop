@@ -99,10 +99,10 @@ export default function SenderPage() {
   return (
     <div className="container animate-fade-in">
       <div className="app-header">
-        <h1>Sender (Alice)</h1>
+        <h1>Sender</h1>
         <div className={`badge ${connected ? 'success' : 'warning'}`}>
           <Network size={14} style={{ marginRight: '6px' }} />
-          {connected ? 'Connected to Bob' : 'Not Connected'}
+          {connected ? 'Connected to Receiver' : 'Not Connected'}
         </div>
       </div>
 
@@ -230,7 +230,7 @@ export default function SenderPage() {
             </button>
 
             {transferStatus && transferStatus.status !== 'sending' && (
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px' }}>
                 <h4 style={{ marginBottom: '0.5rem' }}>Transfer Results</h4>
                 <p>Send Rate: {(transferStatus.send_rate / 1024).toFixed(2)} KB/s</p>
                 {transferStatus.result?.mode === 'exact' && (

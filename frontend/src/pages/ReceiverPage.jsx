@@ -67,7 +67,7 @@ export default function ReceiverPage() {
   return (
     <div className="container animate-fade-in">
       <div className="app-header">
-        <h1>Receiver (Bob)</h1>
+        <h1>Receiver</h1>
         <div className={`badge ${listening ? 'success' : 'info'}`}>
           <Network size={14} style={{ marginRight: '6px' }} />
           {listening ? 'Active Listener' : 'Idle'}
@@ -81,7 +81,7 @@ export default function ReceiverPage() {
               <Network size={20} /> Connection Listener
             </h3>
             <p style={{ marginBottom: '1.5rem' }}>
-              Start the TCP listener to allow Alice to connect, exchange QKD parameters, and send encrypted files.
+              Start the TCP listener to allow Sender to connect, exchange QKD parameters, and send encrypted files.
             </p>
             <button 
               className="btn btn-primary" 
@@ -134,7 +134,7 @@ export default function ReceiverPage() {
           </h3>
           
           {transferData ? (
-            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '8px' }}>
+            <div style={{ background: 'var(--glass-bg)', padding: '1.5rem', borderRadius: '8px' }}>
               <h4 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>
                 {transferData.filename}
               </h4>
