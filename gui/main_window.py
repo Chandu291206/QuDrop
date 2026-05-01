@@ -36,7 +36,7 @@ class MainWindow:
 
         sender_radio = ttk.Radiobutton(
             self.root,
-            text="Sender (Alice)",
+            text="Sender",
             variable=self.mode,
             value="sender"
         )
@@ -44,7 +44,7 @@ class MainWindow:
 
         receiver_radio = ttk.Radiobutton(
             self.root,
-            text="Receiver (Bob)",
+            text="Receiver",
             variable=self.mode,
             value="receiver"
         )

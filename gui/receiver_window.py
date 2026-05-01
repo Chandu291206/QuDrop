@@ -44,7 +44,7 @@ class ReceiverWindow:
 
         title = ttk.Label(
             self.window,
-            text="Receiver (Bob)",
+            text="Receiver",
             font=("Arial", 16)
         )
         title.pack(pady=10)
