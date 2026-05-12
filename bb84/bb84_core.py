@@ -35,7 +35,7 @@ def bob_measure(alice_bits, alice_bases):
 
         try:
             simulator = AerSimulator()
-            results = []
+            circuits = []
 
             for i in range(length):
 
@@ -53,10 +53,15 @@ def bob_measure(alice_bits, alice_bases):
                     qc.h(0)
 
                 qc.measure(0, 0)
-                compiled = transpile(qc, simulator)
-                job = simulator.run(compiled, shots=1)
-                result = job.result()
-                counts = result.get_counts()
+                circuits.append(qc)
+                
+            compiled = transpile(circuits, simulator)
+            job = simulator.run(compiled, shots=1)
+            result = job.result()
+            
+            results = []
+            for i in range(length):
+                counts = result.get_counts(i)
                 bit = int(list(counts.keys())[0])
                 results.append(bit)
 

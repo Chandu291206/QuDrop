@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qudrop - Quantum Secure File Transfer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #060B14;
+      --bg-card: #0D1626;
+      --bg-card-alt: #101D30;
+      --border-glow: #1A3A6A;
+      --accent-cyan: #00D4FF;
+      --accent-violet: #7C3AED;
+      --accent-gold: #F59E0B;
+      --accent-green: #10B981;
+      --text-primary: #E2E8F0;
+      --text-muted: #7A8BA6;
+      --gradient-header: linear-gradient(135deg, #0A1628 0%, #1A0A3E 50%, #0A1628 100%);
+    }
+
+    /* Print Theme Variables */
+    [data-theme="light"] {
+      --bg-primary: #F0EDE4;
+      --bg-card: #FFFFFF;
+      --bg-card-alt: #E8E3D8;
+      --border-glow: #A8B8B7;
+      --accent-cyan: #004743;
+      --accent-violet: #5B3A8A;
+      --accent-gold: #B45309;
+      --accent-green: #166534;
+      --text-primary: #1A2B2B;
+      --text-muted: #5F7272;
+      --gradient-header: linear-gradient(135deg, #E8F4F2 0%, #D4EDE9 50%, #E8F4F2 100%);
+    }
+
+    [data-theme="light"] .text-gradient {
+      background: linear-gradient(90deg, #004743, #5B3A8A);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    [data-theme="light"] .badge {
+      background: rgba(0, 71, 67, 0.08);
+      color: #004743;
+      border-color: rgba(0, 71, 67, 0.25);
+    }
+    
+    [data-theme="light"] .badge.purple {
+      background: rgba(91, 58, 138, 0.08);
+      color: #5B3A8A;
+      border-color: rgba(91, 58, 138, 0.25);
+    }
+    
+    [data-theme="light"] .badge.gold {
+      background: rgba(180, 83, 9, 0.08);
+      color: #B45309;
+      border-color: rgba(180, 83, 9, 0.25);
+    }
+
+    [data-theme="light"] .header-band {
+      border-bottom-color: #004743;
+    }
+
+    [data-theme="light"] .footer-band {
+      border-top-color: #004743;
+    }
+
+    [data-theme="light"] .core-logic-item {
+      background: rgba(0, 71, 67, 0.06) !important;
+      border-color: rgba(0, 71, 67, 0.2) !important;
+    }
+
+    [data-theme="light"] .bar-track {
+      background: rgba(0, 0, 0, 0.08) !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.45;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    /* Poster Container */
+    .poster-container {
+      width: 100%;
+      max-width: 2245px;
+      /* 594mm x 420mm @ 96dpi */
+      aspect-ratio: 594 / 420;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+      /* nothing spills outside the page */
+      border: 1px solid var(--border-glow);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Typography */
+    h1,
+    h2,
+    h3,
+    h4,
+    .outfit-font {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+
+    .tagline {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: var(--accent-cyan);
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 0.55rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p,
+    li {
+      font-size: 0.92rem;
+      margin-bottom: 0.34rem;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    /* Layout Grids */
+    .header-band {
+      background: var(--gradient-header);
+      padding: 16px 28px;
+      display: grid;
+      grid-template-columns: 180px 1fr 180px;
+      /* Institution | Title | Logo */
+      align-items: center;
+      gap: 28px;
+      border-bottom: 2px solid var(--border-glow);
+    }
+
+    .poster-body {
+      display: grid;
+      grid-template-columns: 22% 50% 28%;
+      gap: 10px;
+      padding: 10px 16px;
+      align-items: stretch;
+      flex: 1;
+      /* fills remaining height */
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+      min-height: 0;
+      height: 100%;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 10px;
+      padding: 11px 13px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Accent borders for cards based on category */
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent-cyan);
+    }
+
+    .card.purple-accent::before {
+      background: var(--accent-violet);
+    }
+
+    .card.gold-accent::before {
+      background: var(--accent-gold);
+    }
+
+    .card.green-accent::before {
+      background: var(--accent-green);
+    }
+
+    /* Results Band */
+    .results-band {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric-card {
+      background: var(--bg-card-alt);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-glow);
+      text-align: center;
+    }
+
+    .metric-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 2px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .protocol-bars {
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border-radius: 10px;
+      border: 1px solid var(--border-glow);
+    }
+
+    /* Footer Band */
+    .footer-band {
+      background: var(--bg-card-alt);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 2px solid var(--accent-cyan);
+      flex-shrink: 0;
+    }
+
+    /* Utilities */
+    .text-gradient {
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .badge.purple {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--accent-violet);
+      border-color: rgba(124, 58, 237, 0.2);
+    }
+
+    .badge.gold {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--accent-gold);
+      border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    /* SVG Styling */
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Custom Bullet Lists */
+    .bullet-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 8px;
+    }
+
+    .bullet-list li::before {
+      content: '▹';
+      position: absolute;
+      left: 0;
+      color: var(--accent-cyan);
+      font-weight: bold;
+    }
+
+    .bullet-list.gold li::before {
+      color: var(--accent-gold);
+    }
+
+    .bullet-list.green li::before {
+      color: var(--accent-green);
+    }
+
+    /* Numbered Steps */
+    .step-list {
+      counter-reset: step-counter;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .step-list li {
+      position: relative;
+      padding-left: 32px;
+      margin-bottom: 7px;
+    }
+
+    .step-list li::before {
+      counter-increment: step-counter;
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: -2px;
+      width: 20px;
+      height: 20px;
+      background: rgba(124, 58, 237, 0.2);
+      color: var(--accent-violet);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 1px solid var(--accent-violet);
+    }
+
+    .info-col .card p,
+    .info-col .card li {
+      line-height: 1.3;
+    }
+
+    .info-col .grow,
+    .results-col .grow {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .visual-col {
+      gap: 10px;
+    }
+
+    .flow-card {
+      flex: 1.2;
+      min-height: 255px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mini-card {
+      min-height: 84px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .visual-card {
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .visual-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(122, 139, 166, 0.24);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0));
+    }
+
+    .visual-frame {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    .main-output {
+      flex: 2.7;
+      min-height: 380px;
+    }
+
+    .secondary-output {
+      flex: 2.2;
+      min-height: 320px;
+    }
+
+    .dual-shot {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 6px;
+    }
+
+    .shot {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--border-glow);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .shot-label {
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      background: rgba(6, 11, 20, 0.75);
+      border: 1px solid var(--border-glow);
+      color: var(--text-primary);
+    }
+
+    .stack-tight {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .presentation-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .compact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .metric-pill {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-glow);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .metric-pill .metric-value {
+      font-size: 1.08rem;
+      margin-bottom: 0;
+    }
+
+    /* Print Styles */
+    @media print {
+      @page {
+        size: A2 landscape;
+        margin: 0;
+      }
+
+      /* Reset body to a plain non-scrolling block sized to the A2 page */
+      html, body {
+        width: 594mm;
+        height: 420mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+        background: var(--bg-primary) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        display: block;
+      }
+
+      /* Hide UI-only elements */
+      body > button,
+      .theme-toggle {
+        display: none !important;
+      }
+
+      /*
+       * FIX: Give the poster container explicit physical A2 dimensions.
+       * This prevents the browser from reflowing content into a scrolling
+       * document. aspect-ratio alone is NOT honoured in print mode.
+       */
+      .poster-container {
+        width: 594mm !important;
+        height: 420mm !important;
+        max-width: none !important;
+        /* Keep overflow: hidden so nothing spills beyond the A2 boundary */
+        overflow: hidden !important;
+        /* Remove screen-only chrome */
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        /* Preserve the flex column layout that drives the grid */
+        display: flex;
+        flex-direction: column;
+        /* aspect-ratio: auto is NOT set — explicit w/h is the anchor instead */
+      }
+
+      .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+
+    /* Theme Toggle Button (hidden when printing) */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-glow);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      z-index: 1000;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+    }
+
+    @media print {
+      .theme-toggle {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <button class="theme-toggle"
+    onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light')">Toggle
+    Print Mode</button>
+
+  <div class="poster-container">
+
+    <!-- 1. HEADER BAND -->
+    <header class="header-band">
+      <div class="inst-info" style="text-align: center;">
+        <div
+          style="width: 96px; height: 96px; border: 2px ; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.7rem;">
+          <img src="./images.png" alt="Institution Logo" style="max-width: 100%; max-height: 100%;">
+        </div>
+        <div class="outfit-font" style="font-weight: 700; font-size: 1rem; line-height: 1.2;">GRIET</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px;">Dept: CSE</div>
+      </div>
+
+      <div class="title-area" style="text-align: center;">
+        <h1 class="text-gradient">Qudrop</h1>
+        <div class="tagline">A Quantum Key Distribution (QKD) based Secure File Transfer System</div>
+      </div>
+
+      <div class="logo-area" style="text-align: center;">
+        <div
+          style="width: 96px; height: 96px; border: 2px ; border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.7rem;">
+          <!-- Qudrop Logo SVG -->
+          <svg width="120" height="120" viewBox="0 0 100 100"
+            style="filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--accent-cyan)" stroke-width="2"
+              stroke-dasharray="10 5" opacity="0.5">
+              <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="20s"
+                repeatCount="indefinite" />
+            </circle>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="var(--accent-violet)" stroke-width="1.5" opacity="0.7">
+              <animateTransform attributeName="transform" type="rotate" from="360 50 50" to="0 50 50" dur="15s"
+                repeatCount="indefinite" />
+            </circle>
+            <!-- Padlock body -->
+            <rect x="35" y="45" width="30" height="25" rx="4" fill="var(--bg-card)" stroke="var(--accent-cyan)"
+              stroke-width="2" />
+            <!-- Padlock shackle -->
+            <path d="M 40 45 V 35 A 10 10 0 0 1 60 35 V 45" fill="none" stroke="var(--accent-cyan)" stroke-width="2" />
+            <!-- Keyhole -->
+            <circle cx="50" cy="55" r="3" fill="var(--accent-cyan)" />
+            <path d="M 49 57 L 48 62 L 52 62 L 51 57 Z" fill="var(--accent-cyan)" />
+          </svg>
+        </div>
+        <div class="outfit-font" style="font-weight: 700; font-size: 1rem; line-height: 1.2;">BATCH: I17</div>
+        <div style="font-size: 0.7rem; color: white; margin-top: 4px;">Year: 2026</div>
+      </div>
+    </header>
+
+    <!-- MAIN GRID -->
+    <div class="poster-body">
+      <!-- LEFT COLUMN -->
+      <div class="col info-col">
+        <div class="card">
+          <h2>Project Overview</h2>
+          <ul class="bullet-list">
+            <li>Qudrop is an end-to-end QKD-based secure file transfer platform.</li>
+            <li>It compares BB84, B92, E91, and Six-State under the same noise settings.</li>
+            <li>The system links key generation, encryption, and transfer in one flow.</li>
+          </ul>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+            <span class="badge">BB84</span>
+            <span class="badge purple">B92</span>
+            <span class="badge gold">E91</span>
+            <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.2);">Six-State</span>
+          </div>
+        </div>
+
+        <div class="card gold-accent">
+          <h2 style="color: var(--accent-gold);">Problem Statement</h2>
+          <ul class="bullet-list gold">
+            <li>Classical key exchange can become vulnerable against quantum-capable attacks.</li>
+            <li>Most protocol demos do not show realistic file-transfer reliability.</li>
+          </ul>
+        </div>
+
+        <div class="card green-accent">
+          <h2 style="color: var(--accent-green);">Proposed Solution</h2>
+          <ul class="bullet-list green">
+            <li>Integrate multi-protocol QKD simulation with practical file transfer.</li>
+            <li>Apply privacy amplification and evaluate QBER/BER per protocol.</li>
+          </ul>
+        </div>
+
+        <div class="card purple-accent grow">
+          <h2>Methodology and Use Cases</h2>
+          <ol class="step-list" style="margin-bottom: 10px;">
+            <li>Alice generates random bits and bases.</li>
+            <li>Noisy quantum channel is simulated.</li>
+            <li>Bob performs measurement and key sifting.</li>
+            <li>QBER is estimated and keys are amplified.</li>
+            <li>Files are encrypted, transferred, and BER is reported.</li>
+          </ol>
+          <div class="presentation-note">Primary deliverables from each run:</div>
+          <div class="stack-tight" style="margin-bottom: 10px;">
+            <div style="font-size: 0.86rem;">1. Protocol-wise QBER comparison table</div>
+            <div style="font-size: 0.86rem;">2. Encrypted/decrypted transfer validation</div>
+            <div style="font-size: 0.86rem;">3. BER and runtime summary metrics</div>
+          </div>
+          <div class="stack-tight">
+            <div style="font-size: 0.84rem; font-weight: 600; color: var(--accent-cyan);">Use Cases</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <span class="badge">Government</span>
+              <span class="badge purple">Quantum Labs</span>
+              <span class="badge gold">Enterprise</span>
+              <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border-color: rgba(16, 185, 129, 0.2);">Cyber Training</span>
+            </div>
+          </div>
+          <div class="presentation-note" style="margin-top: 8px;">Implemented project modules:</div>
+          <div class="stack-tight">
+            <div style="font-size: 0.86rem;">1. Multi-protocol QKD engine (BB84/B92/E91/Six-State)</div>
+            <div style="font-size: 0.86rem;">2. FastAPI backend with React dashboard integration</div>
+            <div style="font-size: 0.86rem;">3. Legacy GUI for sender/receiver local validation</div>
+            <div style="font-size: 0.86rem;">4. Noise analysis scripts with BER/QBER reporting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER COLUMN: PRIMARY VISUAL AREA -->
+      <div class="col visual-col">
+        <div class="card flow-card">
+          <h2>How It Works</h2>
+          <div style="flex: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);">
+            <svg width="100%" height="100%" viewBox="-500 -22 1400 1000" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-muted)" />
+                </marker>
+              </defs>
+              <rect x="18" y="18" width="84" height="34" rx="6" fill="rgba(0,212,255,0.12)" stroke="var(--accent-cyan)" />
+              <text x="60" y="39" fill="var(--accent-cyan)" font-size="11" text-anchor="middle">Alice</text>
+              <rect x="130" y="18" width="140" height="34" rx="6" fill="rgba(245,158,11,0.12)" stroke="var(--accent-gold)" />
+              <text x="200" y="39" fill="var(--accent-gold)" font-size="11" text-anchor="middle">Noisy Quantum Channel</text>
+              <rect x="298" y="18" width="84" height="34" rx="6" fill="rgba(124,58,237,0.12)" stroke="var(--accent-violet)" />
+              <text x="340" y="39" fill="var(--accent-violet)" font-size="11" text-anchor="middle">Bob</text>
+              <rect x="70" y="92" width="120" height="36" rx="6" fill="rgba(0,212,255,0.08)" stroke="var(--border-glow)" />
+              <text x="130" y="114" fill="var(--text-primary)" font-size="10" text-anchor="middle">Sifting + QBER</text>
+              <rect x="210" y="92" width="120" height="36" rx="6" fill="rgba(16,185,129,0.1)" stroke="var(--accent-green)" />
+              <text x="270" y="114" fill="var(--accent-green)" font-size="10" text-anchor="middle">SHA-256 Privacy Amp</text>
+              <rect x="130" y="164" width="140" height="34" rx="6" fill="rgba(124,58,237,0.1)" stroke="var(--accent-violet)" />
+              <text x="200" y="185" fill="var(--accent-violet)" font-size="10" text-anchor="middle">XOR Encrypt / Decrypt</text>
+              <rect x="290" y="164" width="92" height="34" rx="6" fill="rgba(0,212,255,0.12)" stroke="var(--accent-cyan)" />
+              <text x="336" y="185" fill="var(--accent-cyan)" font-size="10" text-anchor="middle">File Output</text>
+              <path d="M 102 35 L 130 35" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" />
+              <path d="M 270 35 L 298 35" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" />
+              <path d="M 340 52 L 270 92" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+              <path d="M 60 52 L 130 92" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+              <path d="M 190 110 L 210 110" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" />
+              <path d="M 270 128 L 230 164" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" fill="none" />
+              <path d="M 200 128 L 200 164" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" />
+              <path d="M 270 181 L 290 181" stroke="var(--text-muted)" stroke-width="2" marker-end="url(#arrow)" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="mini-row">
+          <div class="card mini-card purple-accent">
+            <h2>Improvement Loop</h2>
+            <div style="flex: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);">
+              <svg width="100%" height="100%" viewBox="0 0 300 120" preserveAspectRatio="xMidYMid meet">
+                <rect x="100" y="10" width="100" height="24" rx="12" fill="rgba(124, 58, 237, 0.2)" stroke="var(--accent-violet)" />
+                <text x="150" y="26" fill="var(--text-primary)" font-size="10" text-anchor="middle">Noise Analysis</text>
+                <rect x="200" y="48" width="90" height="24" rx="12" fill="rgba(245, 158, 11, 0.2)" stroke="var(--accent-gold)" />
+                <text x="245" y="64" fill="var(--text-primary)" font-size="10" text-anchor="middle">QBER Insights</text>
+                <rect x="100" y="86" width="100" height="24" rx="12" fill="rgba(16, 185, 129, 0.2)" stroke="var(--accent-green)" />
+                <text x="150" y="102" fill="var(--text-primary)" font-size="10" text-anchor="middle">Refinement</text>
+                <rect x="10" y="48" width="80" height="24" rx="12" fill="rgba(0, 212, 255, 0.2)" stroke="var(--accent-cyan)" />
+                <text x="50" y="64" fill="var(--text-primary)" font-size="10" text-anchor="middle">Re-test</text>
+              </svg>
+            </div>
+          </div>
+          <div class="card mini-card gold-accent">
+            <h2 style="color: var(--accent-gold);">Core Logic Snapshot</h2>
+            <div class="stack-tight" style="margin-top: 2px;">
+              <div style="font-size: 0.8rem;"><strong style="color: var(--accent-cyan);">Protocols:</strong> BB84, B92, E91, Six-State</div>
+              <div style="font-size: 0.8rem;"><strong style="color: var(--accent-violet);">Security Layer:</strong> SHA-256 privacy amplification</div>
+              <div style="font-size: 0.8rem;"><strong style="color: var(--accent-gold);">Transfer Layer:</strong> XOR stream encryption</div>
+              <div style="font-size: 0.8rem;"><strong style="color: var(--accent-green);">Evaluation:</strong> QBER and BER tracking</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card visual-card main-output">
+          <div class="visual-header">
+            <h2 style="margin-bottom: 0;">Main Output Dashboard</h2>
+          </div>
+          <div class="visual-frame" style="background-color: whitesmoke;">
+            <img src="./Web page.png" alt="Main Output Image" style="width: 100%; height: 100%; object-fit: contain; padding: 6px;">
+          </div>
+        </div>
+
+        <div class="card visual-card secondary-output">
+          <div class="visual-header">
+            <h2 style="margin-bottom: 0;">Additional Simulation Outputs</h2>
+          </div>
+          <div class="visual-frame">
+            <div class="dual-shot">
+              <div class="shot">
+                <img src="./img3.png" alt="Simulation Output 1">
+                <div class="shot-label">Output A</div>
+              </div>
+              <div class="shot">
+                <img src="./img4.png" alt="Simulation Output 2">
+                <div class="shot-label">Output B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col results-col">
+        <div class="card">
+          <h2>Key Contributions</h2>
+          <ul class="bullet-list">
+            <li>Single platform for four major QKD protocols.</li>
+            <li>End-to-end key generation, transfer, and decryption flow.</li>
+            <li>Dual interface support: modern web dashboard and legacy GUI.</li>
+            <li>Noise-aware protocol benchmarking with comparative outputs.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="flex: 0.95; padding: 15px 16px;">
+          <h2>Results at a Glance</h2>
+          <div class="presentation-note" style="margin-bottom: 12px; line-height: 1.45;">Controlled experiment setting: 5% channel noise.</div>
+          <div class="compact-grid" style="margin-bottom: 14px; gap: 10px;">
+            <div class="metric-pill">
+              <div class="metric-value">5%</div>
+              <div class="metric-label">Noise</div>
+            </div>
+            <div class="metric-pill" style="border-color: var(--accent-violet);">
+              <div class="metric-value" style="color: var(--accent-violet);">4-7%</div>
+              <div class="metric-label">Avg QBER</div>
+            </div>
+            <div class="metric-pill" style="border-color: var(--accent-gold);">
+              <div class="metric-value" style="color: var(--accent-gold);">30-47%</div>
+              <div class="metric-label">File BER</div>
+            </div>
+            <div class="metric-pill" style="border-color: var(--accent-green);">
+              <div class="metric-value" style="color: var(--accent-green);">&lt;1ms</div>
+              <div class="metric-label">Encrypt</div>
+            </div>
+          </div>
+          <div class="stack-tight" style="gap: 12px; margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 12px; line-height: 1.4;">
+              <div style="width: 56px; font-size: 0.8rem; font-weight: 500;">BB84</div>
+              <div class="bar-track" style="flex: 1; height: 12px; background: rgba(0, 212, 255, 0.12); border-radius: 5px; overflow: hidden;">
+                <div style="width: 5%; height: 100%; background: var(--accent-cyan);"></div>
+              </div>
+              <div style="width: 42px; font-size: 0.76rem; text-align: right; color: var(--text-muted);">5%</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; line-height: 1.4;">
+              <div style="width: 56px; font-size: 0.8rem; font-weight: 500;">B92</div>
+              <div class="bar-track" style="flex: 1; height: 12px; background: rgba(124, 58, 237, 0.12); border-radius: 5px; overflow: hidden;">
+                <div style="width: 1%; height: 100%; background: var(--accent-violet);"></div>
+              </div>
+              <div style="width: 42px; font-size: 0.76rem; text-align: right; color: var(--text-muted);">0%</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; line-height: 1.4;">
+              <div style="width: 56px; font-size: 0.8rem; font-weight: 500;">E91</div>
+              <div class="bar-track" style="flex: 1; height: 12px; background: rgba(245, 158, 11, 0.12); border-radius: 5px; overflow: hidden;">
+                <div style="width: 5%; height: 100%; background: var(--accent-gold);"></div>
+              </div>
+              <div style="width: 42px; font-size: 0.76rem; text-align: right; color: var(--text-muted);">5%</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; line-height: 1.4;">
+              <div style="width: 56px; font-size: 0.8rem; font-weight: 500;">6-State</div>
+              <div class="bar-track" style="flex: 1; height: 12px; background: rgba(16, 185, 129, 0.12); border-radius: 5px; overflow: hidden;">
+                <div style="width: 6%; height: 100%; background: var(--accent-green);"></div>
+              </div>
+              <div style="width: 42px; font-size: 0.76rem; text-align: right; color: var(--text-muted);">6%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card purple-accent grow">
+          <h2>Next Steps and Technology</h2>
+          <ul class="bullet-list" style="margin-bottom: 8px;">
+            <li>Add reconciliation layers (Cascade or LDPC) to reduce BER.</li>
+            <li>Integrate authentication for MITM-resistant deployment flow.</li>
+            <li>Scale to cloud execution with real-time monitoring support.</li>
+          </ul>
+          <div class="presentation-note">Deployment-ready focus areas:</div>
+          <div class="stack-tight" style="margin-bottom: 8px;">
+            <div style="font-size: 0.86rem;">1. Reconciliation + authentication integration</div>
+            <div style="font-size: 0.86rem;">2. Live dashboarding for protocol analytics</div>
+            <div style="font-size: 0.86rem;">3. Repeatable test pipelines for benchmark studies</div>
+          </div>
+          <div class="presentation-note">Current project assets included:</div>
+          <div class="stack-tight" style="margin-bottom: 8px;">
+            <div style="font-size: 0.86rem;">1. Protocol runner + socket transfer modules</div>
+            <div style="font-size: 0.86rem;">2. Web dashboard + simulation preview screens</div>
+            <div style="font-size: 0.86rem;">3. Comparative results visualization and export-ready reports</div>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span class="badge" style="background: rgba(97, 218, 251, 0.1); color: #61DAFB; border-color: rgba(97, 218, 251, 0.2);">React</span>
+            <span class="badge purple" style="background: rgba(5, 150, 105, 0.1); color: #10B981; border-color: rgba(5, 150, 105, 0.2);">FastAPI</span>
+            <span class="badge">Python 3.10+</span>
+            <span class="badge purple">Node.js 18+</span>
+            <span class="badge gold">TCP Sockets</span>
+            <span class="badge">Qiskit (opt)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER BAND -->
+    <footer class="footer-band">
+      <div>
+        <h4 style="color: var(--text-muted); margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase;">Team
+          Members</h4>
+        <div style="font-size: 0.9rem; display: flex; flex-direction: row; gap: 24px; flex-wrap: wrap;">
+          <div>Ommi Chandu Chethan - 2424 1A05PR</div>
+          <div>Kolipaka Billu - 24241A05P9</div>
+          <div>Mylapuram Sriraj - 24241A05PP</div>
+        </div>
+      </div>
+
+      <div style="text-align: right;">
+        <h4 style="color: var(--text-muted); margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase;">Under
+          the Guidance Of</h4>
+        <div
+          style="display: flex; flex-direction: row; justify-content: flex-end; align-items: baseline; gap: 12px; flex-wrap: wrap;">
+          <div style="font-size: 0.9rem; font-weight: 500; color: var(--accent-cyan);">G.Mallikarjun Rao</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Professor</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Batch: I-17</div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+
+</html>

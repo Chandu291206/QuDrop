@@ -243,91 +243,94 @@ async def receiver_loop(sid):
     try:
         sock = await asyncio.to_thread(start_server)
         tcp_sockets[sid] = sock
-        await sio.emit('status', {'message': 'Sender connected. Waiting for protocol...', 'level': 'success'}, namespace='/receiver', to=sid)
+        await sio.emit('status', {'message': 'Sender connected. Waiting for commands...', 'level': 'success'}, namespace='/receiver', to=sid)
         
-        msg = await asyncio.to_thread(receive_message, sock)
-        if msg != "START_QKD":
-            return
-            
-        protocol = await asyncio.to_thread(receive_message, sock)
-        await sio.emit('status', {'message': f'{protocol} session started', 'level': 'info'}, namespace='/receiver', to=sid)
-        
-        alice_data = await asyncio.to_thread(receive_list, sock)
-        alice_bits = alice_data["bits"]
-        alice_bases = alice_data["bases"]
-        
-        bob_bases, bob_results, extra_data = ProtocolRunner.bob_measure(protocol, alice_bits, alice_bases)
-        
-        await asyncio.to_thread(send_list, sock, {
-            "bases": bob_bases,
-            "extra_data": extra_data
-        })
-        
-        bob_sifted = ProtocolRunner.sift_key_bob(protocol, bob_results, alice_bases, bob_bases, extra_data)
-        sample_indices, alice_sample_bits = await asyncio.to_thread(receive_qber_sample, sock)
-        
-        if not sample_indices:
-            qber = 0.0
-            bob_remaining = bob_sifted
-        else:
-            valid_pairs = []
-            for idx, a_bit in zip(sample_indices, alice_sample_bits):
-                if 0 <= idx < len(bob_sifted):
-                    valid_pairs.append((idx, a_bit))
-            
-            if not valid_pairs:
-                qber = 1.0
-                bob_remaining = []
-            else:
-                errors = sum(1 for idx, a_bit in valid_pairs if bob_sifted[idx] != a_bit)
-                qber = errors / len(valid_pairs)
-                sample_set = {idx for idx, _ in valid_pairs}
-                bob_remaining = [bit for i, bit in enumerate(bob_sifted) if i not in sample_set]
+        while True:
+            msg = await asyncio.to_thread(receive_message, sock)
+            if not msg:
+                break
                 
-        await asyncio.to_thread(send_list, sock, {"qber": qber})
-        
-        if qber > QBER_THRESHOLD:
-            await sio.emit('key_aborted', {'reason': 'Eavesdropping detected', 'qber': qber}, namespace='/receiver', to=sid)
-            return
-            
-        final_key = privacy_amplify(bob_remaining)
-        if not final_key:
-            await sio.emit('key_aborted', {'reason': 'Privacy amplification failed', 'qber': qber}, namespace='/receiver', to=sid)
-            return
-            
-        shared_keys[sid] = final_key
-        await sio.emit('key_ready', {
-            'key_bits': len(final_key) * 8,
-            'qber': qber,
-            'key_rate': 0
-        }, namespace='/receiver', to=sid)
-        
-        # Wait for file
-        msg = await asyncio.to_thread(receive_message, sock)
-        if msg == "FILE_TRANSFER":
-            filename = await asyncio.to_thread(receive_message, sock)
-            meta = await asyncio.to_thread(receive_list, sock)
-            include_ref = meta.get("include_reference", False)
-            
-            receive_start = time.perf_counter()
-            encrypted = await asyncio.to_thread(receive_file, sock)
-            ref_data = await asyncio.to_thread(receive_file, sock) if include_ref else None
-            receive_elapsed = max(time.perf_counter() - receive_start, 1e-9)
-            
-            decrypted = xor_decrypt(encrypted, shared_keys[sid])
-            os.makedirs("received_files", exist_ok=True)
-            with open(os.path.join("received_files", filename), "wb") as f:
-                f.write(decrypted)
+            if msg == "START_QKD":
+                protocol = await asyncio.to_thread(receive_message, sock)
+                await sio.emit('status', {'message': f'{protocol} session started', 'level': 'info'}, namespace='/receiver', to=sid)
                 
-            result_payload = compute_transfer_errors(ref_data, decrypted)
-            await asyncio.to_thread(send_list, sock, result_payload)
-            
-            await sio.emit('file_received', {
-                'filename': filename,
-                'receive_rate': len(encrypted) / receive_elapsed,
-                'result': result_payload
-            }, namespace='/receiver', to=sid)
-            
+                alice_data = await asyncio.to_thread(receive_list, sock)
+                alice_bits = alice_data["bits"]
+                alice_bases = alice_data["bases"]
+                
+                bob_bases, bob_results, extra_data = ProtocolRunner.bob_measure(protocol, alice_bits, alice_bases)
+                
+                await asyncio.to_thread(send_list, sock, {
+                    "bases": bob_bases,
+                    "extra_data": extra_data
+                })
+                
+                bob_sifted = ProtocolRunner.sift_key_bob(protocol, bob_results, alice_bases, bob_bases, extra_data)
+                sample_indices, alice_sample_bits = await asyncio.to_thread(receive_qber_sample, sock)
+                
+                if not sample_indices:
+                    qber = 0.0
+                    bob_remaining = bob_sifted
+                else:
+                    valid_pairs = []
+                    for idx, a_bit in zip(sample_indices, alice_sample_bits):
+                        if 0 <= idx < len(bob_sifted):
+                            valid_pairs.append((idx, a_bit))
+                    
+                    if not valid_pairs:
+                        qber = 1.0
+                        bob_remaining = []
+                    else:
+                        errors = sum(1 for idx, a_bit in valid_pairs if bob_sifted[idx] != a_bit)
+                        qber = errors / len(valid_pairs)
+                        sample_set = {idx for idx, _ in valid_pairs}
+                        bob_remaining = [bit for i, bit in enumerate(bob_sifted) if i not in sample_set]
+                        
+                await asyncio.to_thread(send_list, sock, {"qber": qber})
+                
+                if qber > QBER_THRESHOLD:
+                    await sio.emit('key_aborted', {'reason': 'Eavesdropping detected', 'qber': qber}, namespace='/receiver', to=sid)
+                    continue
+                    
+                final_key = privacy_amplify(bob_remaining)
+                if not final_key:
+                    await sio.emit('key_aborted', {'reason': 'Privacy amplification failed', 'qber': qber}, namespace='/receiver', to=sid)
+                    continue
+                    
+                shared_keys[sid] = final_key
+                await sio.emit('key_ready', {
+                    'key_bits': len(final_key) * 8,
+                    'qber': qber,
+                    'key_rate': 0
+                }, namespace='/receiver', to=sid)
+                
+            elif msg == "FILE_TRANSFER":
+                filename = await asyncio.to_thread(receive_message, sock)
+                meta = await asyncio.to_thread(receive_list, sock)
+                include_ref = meta.get("include_reference", False)
+                
+                receive_start = time.perf_counter()
+                encrypted = await asyncio.to_thread(receive_file, sock)
+                ref_data = await asyncio.to_thread(receive_file, sock) if include_ref else None
+                receive_elapsed = max(time.perf_counter() - receive_start, 1e-9)
+                
+                if sid in shared_keys:
+                    decrypted = xor_decrypt(encrypted, shared_keys[sid])
+                    os.makedirs("received_files", exist_ok=True)
+                    with open(os.path.join("received_files", filename), "wb") as f:
+                        f.write(decrypted)
+                        
+                    result_payload = compute_transfer_errors(ref_data, decrypted)
+                    await asyncio.to_thread(send_list, sock, result_payload)
+                    
+                    await sio.emit('file_received', {
+                        'filename': filename,
+                        'receive_rate': len(encrypted) / receive_elapsed,
+                        'result': result_payload
+                    }, namespace='/receiver', to=sid)
+                else:
+                    await sio.emit('error', {'message': "No shared key available for decryption."}, namespace='/receiver', to=sid)
+
     except Exception as e:
         await sio.emit('error', {'message': str(e)}, namespace='/receiver', to=sid)
 
